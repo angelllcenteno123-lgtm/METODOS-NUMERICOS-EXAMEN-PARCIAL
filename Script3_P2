@@ -1,0 +1,34 @@
+% =========================================================================
+% GRÁFICA PARTE 3: Cruce por Cero del Voltaje de Salida
+% =========================================================================
+figure;
+hold on;
+grid on;
+
+% Creamos un vector de frecuencia mucho más denso para que el spline se vea suave
+f_fino = linspace(min(f_kHz), max(f_kHz), 1000);
+V_spline_fino = fnval(cs_V, f_fino);
+
+% 1. Graficamos el modelo continuo del Spline Cúbico (Línea azul)
+plot(f_fino, V_spline_fino, 'b-', 'LineWidth', 1.5, 'DisplayName', 'Spline cúbico');
+
+% 2. Graficamos los puntos reales de los Datos Medidos (Puntos negros)
+plot(f_kHz, V_volts, 'ko', 'MarkerFaceColor', 'k', 'DisplayName', 'Datos Medidos');
+
+% 3. Dibujamos el nivel del Umbral Cero (Línea punteada)
+yline(0, 'k--', 'LineWidth', 1.5, 'DisplayName', 'Umbral Cero');
+
+% 4. Resaltamos las Raíces Calculadas (Puntos rojos)
+% (Usamos los valores exactos que halló tu algoritmo de bisección)
+raices_x = [55.4351, 64.2665]; 
+raices_y = [0, 0];
+plot(raices_x, raices_y, 'ro', 'MarkerSize', 8, 'MarkerFaceColor', 'r', 'DisplayName', 'Raíces Calculadas');
+
+% Formato y presentación de la gráfica
+title('Cruce por Cero del Voltaje de Salida V(f)');
+xlabel('Frecuencia (kHz)');
+ylabel('Voltaje V(V)');
+legend('Location', 'best');
+xlim([0 110]);
+ylim([-0.2 1.6]);
+hold off;
