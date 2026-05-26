@@ -1,0 +1,60 @@
+% =========================================================================
+% PARTE C - Primer Guion: Derivada Numérica (Analítica del Spline)
+% =========================================================================
+
+% 1. Datos experimentales
+f_Hz = [100, 120, 145, 170, 200, 235, 270, 310, 355, 405, 460, 520, ...
+        585, 655, 730, 810, 895, 985, 1080, 1180, 1290, 1410, 1540, ...
+        1680, 1830, 1990, 2160, 2340, 2530, 2730];
+Z_ohm = [152.3, 149.1, 146.8, 144.9, 142.0, 139.5, 137.9, 136.1, ...
+         134.8, 133.6, 132.7, 131.9, 131.4, 131.1, 130.9, 131.0, ...
+         131.3, 131.9, 132.7, 133.8, 135.2, 136.9, 138.9, 141.1, ...
+         143.5, 146.1, 149.0, 152.2, 155.6, 159.2];
+
+% -------------------------------------------------------------------------
+% 2. Derivación Analítica del Spline Cúbico
+% -------------------------------------------------------------------------
+% Generamos la estructura del spline
+pp = spline(f_Hz, Z_ohm);
+
+% Extraemos sus componentes (intervalos y coeficientes de grado 3)
+[breaks, coefs, L, K, d] = unmkpp(pp);
+
+% Derivamos matemáticamente cada polinomio (ax^3 + bx^2 + cx + d)'
+% Se reduce a grado 2: 3ax^2 + 2bx + c
+coefs_deriv = [3*coefs(:,1), 2*coefs(:,2), coefs(:,3)];
+
+% Reconstruimos la estructura para la primera derivada
+pp_deriv = mkpp(breaks, coefs_deriv);
+
+% -------------------------------------------------------------------------
+% 3. Evaluación y Búsqueda de la Raíz (Cruce por cero)
+% -------------------------------------------------------------------------
+f_eval = linspace(min(f_Hz), max(f_Hz), 1000);
+deriv_eval = ppval(pp_deriv, f_eval);
+deriv_nodos = ppval(pp_deriv, f_Hz);
+
+% Buscamos exactamente dónde la derivada se hace cero (cerca de 730 Hz)
+fun_deriv = @(x) ppval(pp_deriv, x);
+f_min_exacto = fzero(fun_deriv, 730);
+
+% -------------------------------------------------------------------------
+% 4. Gráfica de la Primera Derivada
+% -------------------------------------------------------------------------
+figure('Name', 'Parte C: Primera Derivada d|Z|/df', 'Color', 'w');
+plot(f_eval, deriv_eval, 'b', 'LineWidth', 1.5); hold on;
+plot(f_Hz, deriv_nodos, 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 5);
+
+% Trazamos la línea del cero y el punto exacto de cruce
+yline(0, 'k--', 'LineWidth', 1.2);
+plot(f_min_exacto, 0, 'rp', 'MarkerSize', 10, 'MarkerFaceColor', 'r');
+
+title('Primera Derivada Analítica de la Impedancia', 'FontSize', 12, 'FontWeight', 'bold');
+xlabel('Frecuencia f (Hz)', 'FontSize', 11, 'FontWeight', 'bold');
+ylabel('d|Z|/df (\Omega/Hz)', 'FontSize', 11, 'FontWeight', 'bold');
+legend('Derivada d|Z|/df', 'Nodos de datos', 'Línea Cero', ...
+       sprintf('Mínimo en %.4f Hz', f_min_exacto), 'Location', 'southeast');
+grid on; grid minor; hold off;
+
+fprintf('\n--- RESULTADOS PARTE C (Primer Guion) ---\n');
+fprintf('Ubicación exacta del mínimo (d|Z|/df = 0): %.4f Hz\n\n', f_min_exacto);
