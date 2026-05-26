@@ -1,0 +1,82 @@
+% =========================================================================
+% PARTE B1 - Primer Guion: Interpolación sobre todo el rango (Grado 29)
+% =========================================================================
+
+% 1. Ingreso de los datos experimentales (30 puntos)
+f_Hz = [100, 120, 145, 170, 200, 235, 270, 310, 355, 405, 460, 520, ...
+        585, 655, 730, 810, 895, 985, 1080, 1180, 1290, 1410, 1540, ...
+        1680, 1830, 1990, 2160, 2340, 2530, 2730];
+        
+Z_ohm = [152.3, 149.1, 146.8, 144.9, 142.0, 139.5, 137.9, 136.1, ...
+         134.8, 133.6, 132.7, 131.9, 131.4, 131.1, 130.9, 131.0, ...
+         131.3, 131.9, 132.7, 133.8, 135.2, 136.9, 138.9, 141.1, ...
+         143.5, 146.1, 149.0, 152.2, 155.6, 159.2];
+
+% Rango continuo (malla fina) para graficar los polinomios
+f_eval = linspace(min(f_Hz), max(f_Hz), 1000);
+
+% -------------------------------------------------------------------------
+% MÉTODO MATRICIAL (Sistema de Vandermonde)
+% -------------------------------------------------------------------------
+V = vander(f_Hz);
+
+% NOTA: MATLAB lanzará un "Warning" en la consola por matriz mal condicionada.
+coef_matricial = V \ Z_ohm'; 
+Z_matricial = polyval(coef_matricial, f_eval);
+
+% -------------------------------------------------------------------------
+% MÉTODO DE LAGRANGE
+% -------------------------------------------------------------------------
+Z_lagrange = calcular_lagrange(f_Hz, Z_ohm, f_eval);
+
+% -------------------------------------------------------------------------
+% GENERACIÓN DE GRÁFICAS (EN VENTANAS SEPARADAS)
+% -------------------------------------------------------------------------
+
+% --- VENTANA 1: Método Matricial (Sin límite para mostrar el colapso) ---
+figure('Name', 'Parte B1: Método Matricial (Grado 29)', 'Color', 'w');
+plot(f_eval, Z_matricial, 'r', 'LineWidth', 1.2);
+hold on;
+plot(f_Hz, Z_ohm, 'bo', 'MarkerFaceColor', 'b'); 
+title('Interpolación Global (Grado 29) - Método Matricial', 'FontSize', 12, 'FontWeight', 'bold');
+xlabel('Frecuencia f (Hz)', 'FontSize', 11, 'FontWeight', 'bold');
+ylabel('Magnitud |Z| (\Omega)', 'FontSize', 11, 'FontWeight', 'bold');
+grid on;
+grid minor;
+legend('Polinomio Obtenido', 'Datos Medidos', 'Location', 'northeast');
+hold off;
+
+% --- VENTANA 2: Método de Lagrange (Con zoom para evidenciar Runge) ---
+figure('Name', 'Parte B1: Método de Lagrange (Grado 29)', 'Color', 'w');
+plot(f_eval, Z_lagrange, 'b', 'LineWidth', 1.2);
+hold on;
+plot(f_Hz, Z_ohm, 'ko', 'MarkerFaceColor', 'k');
+title('Interpolación Global (Grado 29) - Método de Lagrange', 'FontSize', 12, 'FontWeight', 'bold');
+xlabel('Frecuencia f (Hz)', 'FontSize', 11, 'FontWeight', 'bold');
+ylabel('Magnitud |Z| (\Omega)', 'FontSize', 11, 'FontWeight', 'bold');
+grid on;
+grid minor;
+ylim([50 250]); % Límite crucial para ver las oscilaciones de Runge
+legend('Polinomio de Lagrange', 'Datos Medidos', 'Location', 'northeast');
+hold off;
+
+% =========================================================================
+% FUNCIÓN LOCAL: Algoritmo de Interpolación de Lagrange
+% =========================================================================
+function Z_est = calcular_lagrange(x_datos, y_datos, x_eval)
+    n = length(x_datos);
+    Z_est = zeros(size(x_eval));
+    for k = 1:length(x_eval)
+        suma = 0;
+        for i = 1:n
+            producto = 1;
+            for j = 1:n
+                if i ~= j
+                    producto = producto * (x_eval(k) - x_datos(j)) / (x_datos(i) - x_datos(j));
+                end
+            end
+            suma = suma + y_datos(i) * producto;
+        end
+        Z_est(k) = suma;
+    end
+end
