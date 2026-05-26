@@ -1,0 +1,45 @@
+% =========================================================================
+% PARTE 2: Derivación Numérica
+% =========================================================================
+
+% (Asegúrate de tener cargados los vectores f_kHz y V_volts de la Parte 1)
+h = 2.5; % El paso constante de frecuencia es 2.5 kHz
+
+fprintf('\n--- 1. DIFERENCIAS CENTRADAS ---\n');
+% Puntos a evaluar: 40.0 kHz (índice 13), 70.0 kHz (índice 25), 100.0 kHz (índice 37)
+indices_eval = [13, 25, 37]; 
+freqs_eval = [40.0, 70.0, 100.0];
+
+for i = 1:length(indices_eval)
+    idx = indices_eval(i);
+    f_val = freqs_eval(i);
+    
+    % Diferencia centrada de orden 2: f'(x) = [f(x+h) - f(x-h)] / (2h)
+    deriv_O2 = (V_volts(idx+1) - V_volts(idx-1)) / (2*h);
+    
+    % Diferencia centrada de orden 4: f'(x) = [-f(x+2h) + 8f(x+h) - 8f(x-h) + f(x-2h)] / (12h)
+    deriv_O4 = (-V_volts(idx+2) + 8*V_volts(idx+1) - 8*V_volts(idx-1) + V_volts(idx-2)) / (12*h);
+    
+    fprintf('Frecuencia: %.1f kHz\n', f_val);
+    fprintf('Orden 2 = %.4f V/kHz\n', deriv_O2);
+    fprintf('Orden 4 = %.4f V/kHz\n\n', deriv_O4);
+end
+
+fprintf('--- 2. DIFERENCIA PROGRESIVA ---\n');
+% Evaluación en f = 10.0 kHz (índice 1)
+% Fórmula progresiva orden 2: f'(x) = [-3f(x) + 4f(x+h) - f(x+2h)] / (2h)
+deriv_prog_O2 = (-3*V_volts(1) + 4*V_volts(2) - V_volts(3)) / (2*h);
+fprintf('Frecuencia: 10.0 kHz\n');
+fprintf('Progresiva Orden 2 = %.4f V/kHz\n\n', deriv_prog_O2);
+
+fprintf('--- 3. DERIVACIÓN MEDIANTE SPLINE CÚBICO ---\n');
+% Usamos csape para el spline natural y fnder para derivar analíticamente el modelo
+cs_V = csape(f_kHz, V_volts, 'variational');
+dcs_V = fnder(cs_V, 1); % Obtiene la primera derivada del spline
+
+freqs_spline = [10.0, 40.0, 70.0, 100.0];
+deriv_spline_vals = fnval(dcs_V, freqs_spline);
+
+for i = 1:length(freqs_spline)
+    fprintf('Frecuencia: %.1f kHz = %.4f V/kHz\n', freqs_spline(i), deriv_spline_vals(i));
+end
